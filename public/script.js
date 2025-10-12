@@ -1,6 +1,8 @@
 // API Configuration
-const API_KEY = 'db712e605e96a5d39d853fb684e45d93';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const WEATHER_API_KEY = 'db712e605e96a5d39d853fb684e45d93';
+const UNSPLASH_API_KEY = 'vqQ4TjhQtDRnttG35Vy5b1AQZ3kOlynCkE0WPo_9DEo';
+const WEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const UNSPLASH_BASE_URL = 'https://api.unsplash.com';
 
 // DOM Elements
 const cityInput = document.getElementById('cityInput');
@@ -9,6 +11,8 @@ const errorMessage = document.getElementById('errorMessage');
 const currentWeather = document.getElementById('currentWeather');
 const weatherDetails = document.getElementById('weatherDetails');
 const forecast = document.getElementById('forecast');
+const loadingState = document.getElementById('loadingState');
+const backgroundImage = document.getElementById('backgroundImage');
 
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
@@ -35,6 +39,50 @@ function handleSearch() {
     getWeatherData(city);
 }
 
+// Fetch City Background Image from Unsplash
+async function getCityImage(cityName) {
+    try {
+        // If no API key is provided, use a fallback gradient
+        if (UNSPLASH_API_KEY === 'YOUR_UNSPLASH_ACCESS_KEY') {
+            console.log('Unsplash API key not configured. Using default background.');
+            return null;
+        }
+        
+        const response = await fetch(
+            `${UNSPLASH_BASE_URL}/search/photos?query=${encodeURIComponent(cityName + ' city skyline')}&per_page=1&orientation=landscape&client_id=${UNSPLASH_API_KEY}`
+        );
+        
+        if (!response.ok) {
+            throw new Error('Unable to fetch city image');
+        }
+        
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+            return data.results[0].urls.regular;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error fetching city image:', error);
+        return null;
+    }
+}
+
+// Update Background Image
+async function updateBackgroundImage(cityName) {
+    const imageUrl = await getCityImage(cityName);
+    
+    if (imageUrl) {
+        backgroundImage.style.backgroundImage = `url('${imageUrl}')`;
+        backgroundImage.style.opacity = '1';
+    } else {
+        // Fallback to gradient if no image is found
+        backgroundImage.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        backgroundImage.style.opacity = '1';
+    }
+}
+
 // Fetch Weather Data
 async function getWeatherData(city) {
     try {
@@ -43,7 +91,7 @@ async function getWeatherData(city) {
         
         // Get current weather
         const currentResponse = await fetch(
-            `${BASE_URL}/weather?q=${city}&appid=${API_KEY}&units=metric`
+            `${WEATHER_BASE_URL}/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`
         );
         
         if (!currentResponse.ok) {
@@ -52,20 +100,19 @@ async function getWeatherData(city) {
             if (currentResponse.status === 404) {
                 throw new Error('City not found. Please check the spelling and try again.');
             } else if (currentResponse.status === 401) {
-                // Enhanced error message for API key issues
                 console.error('API Key Error Details:', errorData);
-                throw new Error('API key error: Your API key may not be activated yet. New keys can take 1-2 hours to activate. Please wait and try again, or verify your key at openweathermap.org');
+                throw new Error('API key error: Your API key may not be activated yet. New keys can take 1-2 hours to activate. Please wait and try again.');
             } else {
                 throw new Error(`Unable to fetch weather data. Error: ${errorData.message || currentResponse.statusText}`);
             }
         }
         
         const currentData = await currentResponse.json();
-        console.log('Current weather data:', currentData); // Debug log
+        console.log('Current weather data:', currentData);
         
         // Get 5-day forecast
         const forecastResponse = await fetch(
-            `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=metric`
+            `${WEATHER_BASE_URL}/forecast?q=${city}&appid=${WEATHER_API_KEY}&units=metric`
         );
         
         if (!forecastResponse.ok) {
@@ -74,11 +121,17 @@ async function getWeatherData(city) {
         }
         
         const forecastData = await forecastResponse.json();
-        console.log('Forecast data:', forecastData); // Debug log
+        console.log('Forecast data:', forecastData);
+        
+        // Update background image
+        await updateBackgroundImage(currentData.name);
         
         // Display data
         displayCurrentWeather(currentData);
         displayForecast(forecastData);
+        
+        // Update last updated time
+        updateLastUpdated();
         
         hideLoading();
         
@@ -102,7 +155,6 @@ function displayCurrentWeather(data) {
     
     // Update date and time
     updateDateTime();
-    // Clear any existing intervals to prevent multiple timers
     if (window.dateTimeInterval) {
         clearInterval(window.dateTimeInterval);
     }
@@ -114,10 +166,12 @@ function displayCurrentWeather(data) {
     document.getElementById('windSpeed').textContent = `${Math.round(wind.speed * 3.6)} km/h`;
     document.getElementById('pressure').textContent = `${main.pressure} mb`;
     document.getElementById('visibility').textContent = `${(visibility / 1000).toFixed(1)} km`;
-    
-    // UV Index would require additional API call (One Call API)
-    // For now, we'll show a placeholder or calculate based on conditions
     document.getElementById('uvIndex').textContent = calculateUVIndex(weather[0].id);
+    
+    // Update quick stats
+    document.getElementById('quickHumidity').textContent = `${main.humidity}%`;
+    document.getElementById('quickWind').textContent = `${Math.round(wind.speed * 3.6)} km/h`;
+    document.getElementById('quickFeels').textContent = `${Math.round(main.feels_like)}°C`;
     
     // Show elements
     currentWeather.classList.remove('d-none');
@@ -179,10 +233,16 @@ function updateDateTime() {
     document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
 }
 
+// Update Last Updated Time
+function updateLastUpdated() {
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (lastUpdatedElement) {
+        lastUpdatedElement.textContent = 'Updated just now';
+    }
+}
+
 // Calculate UV Index (approximate based on weather conditions)
 function calculateUVIndex(weatherId) {
-    // This is a simplified calculation
-    // Ideally, you'd use the One Call API for accurate UV data
     if (weatherId >= 200 && weatherId < 600) {
         return '2 - Low';
     } else if (weatherId >= 600 && weatherId < 700) {
@@ -204,6 +264,7 @@ function showError(message) {
     currentWeather.classList.add('d-none');
     weatherDetails.classList.add('d-none');
     forecast.classList.add('d-none');
+    loadingState.classList.add('d-none');
 }
 
 // Hide Error Message
@@ -213,16 +274,15 @@ function hideError() {
 
 // Show Loading State
 function showLoading() {
-    searchBtn.innerHTML = '<div class="loading"></div>';
+    loadingState.classList.remove('d-none');
+    currentWeather.classList.add('d-none');
+    weatherDetails.classList.add('d-none');
+    forecast.classList.add('d-none');
     searchBtn.disabled = true;
 }
 
 // Hide Loading State
 function hideLoading() {
-    searchBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-        </svg>
-    `;
+    loadingState.classList.add('d-none');
     searchBtn.disabled = false;
 }
