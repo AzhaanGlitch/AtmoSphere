@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtmoSphere - Weather Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Panel - Current Weather -->
+            <div class="col-lg-5 left-panel">
+                <div class="weather-content">
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <input type="text" id="cityInput" class="form-control search-input" placeholder="Search for a city...">
+                        <button id="searchBtn" class="btn search-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+                    <!-- Current Weather Display -->
+                    <div id="currentWeather" class="current-weather d-none">
+                        <div class="weather-icon-main">
+                            <img id="mainWeatherIcon" src="" alt="Weather Icon">
+                        </div>
+                        
+                        <div class="temperature-main">
+                            <span id="mainTemp"></span>
+                            <span class="temp-unit">°C</span>
+                        </div>
+                        
+                        <div class="weather-description" id="weatherDescription"></div>
+                        
+                        <div class="location">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                            </svg>
+                            <span id="cityName"></span>
+                        </div>
+
+                        <div class="date-time">
+                            <div id="currentDate"></div>
+                            <div id="currentTime"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Forecast & Details -->
+            <div class="col-lg-7 right-panel">
+                <div class="forecast-content">
+                    <h2 class="section-title">Today's Forecast</h2>
+                    
+                    <!-- Weather Details Grid -->
+                    <div id="weatherDetails" class="weather-details d-none">
+                        <div class="detail-card">
+                            <div class="detail-label">Feels Like</div>
+                            <div class="detail-value" id="feelsLike">--°C</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Humidity</div>
+                            <div class="detail-value" id="humidity">--%</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Wind Speed</div>
+                            <div class="detail-value" id="windSpeed">-- km/h</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Pressure</div>
+                            <div class="detail-value" id="pressure">-- mb</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Visibility</div>
+                            <div class="detail-value" id="visibility">-- km</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">UV Index</div>
+                            <div class="detail-value" id="uvIndex">--</div>
+                        </div>
+                    </div>
+
+                    <!-- 5-Day Forecast -->
+                    <h2 class="section-title mt-5">5-Day Forecast</h2>
+                    <div id="forecast" class="forecast-container d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
