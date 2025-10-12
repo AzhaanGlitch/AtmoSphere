@@ -1,5 +1,5 @@
 // API Configuration
-const API_KEY = '2d2d6db30ebb6d54f26c25ef9fa04d25';
+const API_KEY = 'db712e605e96a5d39d853fb684e45d93';
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 // DOM Elements
@@ -47,16 +47,21 @@ async function getWeatherData(city) {
         );
         
         if (!currentResponse.ok) {
+            const errorData = await currentResponse.json().catch(() => ({}));
+            
             if (currentResponse.status === 404) {
                 throw new Error('City not found. Please check the spelling and try again.');
             } else if (currentResponse.status === 401) {
-                throw new Error('Invalid API key. Please check your API configuration.');
+                // Enhanced error message for API key issues
+                console.error('API Key Error Details:', errorData);
+                throw new Error('API key error: Your API key may not be activated yet. New keys can take 1-2 hours to activate. Please wait and try again, or verify your key at openweathermap.org');
             } else {
-                throw new Error('Unable to fetch weather data. Please try again later.');
+                throw new Error(`Unable to fetch weather data. Error: ${errorData.message || currentResponse.statusText}`);
             }
         }
         
         const currentData = await currentResponse.json();
+        console.log('Current weather data:', currentData); // Debug log
         
         // Get 5-day forecast
         const forecastResponse = await fetch(
@@ -64,10 +69,12 @@ async function getWeatherData(city) {
         );
         
         if (!forecastResponse.ok) {
-            throw new Error('Unable to fetch forecast data. Please try again later.');
+            const errorData = await forecastResponse.json().catch(() => ({}));
+            throw new Error(`Unable to fetch forecast data. Error: ${errorData.message || forecastResponse.statusText}`);
         }
         
         const forecastData = await forecastResponse.json();
+        console.log('Forecast data:', forecastData); // Debug log
         
         // Display data
         displayCurrentWeather(currentData);
@@ -95,7 +102,11 @@ function displayCurrentWeather(data) {
     
     // Update date and time
     updateDateTime();
-    setInterval(updateDateTime, 1000);
+    // Clear any existing intervals to prevent multiple timers
+    if (window.dateTimeInterval) {
+        clearInterval(window.dateTimeInterval);
+    }
+    window.dateTimeInterval = setInterval(updateDateTime, 1000);
     
     // Update weather details
     document.getElementById('feelsLike').textContent = `${Math.round(main.feels_like)}°C`;
