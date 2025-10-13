@@ -25,6 +25,9 @@ cityInput.addEventListener('keypress', (e) => {
 // Initialize 3D Background
 init3DBackground();
 
+// Initialize Globe
+initGlobe();
+
 // Create Animated Particles
 createParticles();
 
