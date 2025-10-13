@@ -11,15 +11,24 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Favicon-->
     <link rel="icon" type="image/x-icon" href="/assets/favicon.png">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Animated particles -->
+    <div class="particles" id="particles"></div>
+    
     <!-- Main Container -->
     <div class="container-fluid">
         <div class="row">
@@ -29,21 +38,28 @@
                 <div class="background-image" id="backgroundImage"></div>
                 <div class="background-overlay"></div>
                 
+                <!-- Animated grid overlay -->
+                <div class="grid-overlay"></div>
+                
                 <div class="weather-content">
                     <!-- App Title -->
                     <div class="app-title">
-                        <h1>AtmoSphere</h1>
-                        <p>Your Weather Companion</p>
+                        <h1 class="glitch" data-text="ATMOSPHERE">ATMOSPHERE</h1>
+                        <p class="subtitle">TACTICAL WEATHER INTELLIGENCE</p>
+                        <div class="title-line"></div>
                     </div>
                     
                     <!-- Search Bar -->
                     <div class="search-container">
-                        <input type="text" id="cityInput" class="form-control search-input" placeholder="Search for a city...">
-                        <button id="searchBtn" class="btn search-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                            </svg>
-                        </button>
+                        <div class="search-wrapper">
+                            <input type="text" id="cityInput" class="form-control search-input" placeholder="ENTER LOCATION...">
+                            <button id="searchBtn" class="btn search-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                                <span class="btn-glow"></span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Error Message -->
@@ -51,10 +67,12 @@
 
                     <!-- Loading State -->
                     <div id="loadingState" class="loading-state d-none">
-                        <div class="spinner-border text-light" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                        <div class="loading-spinner">
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
                         </div>
-                        <p>Fetching weather data...</p>
+                        <p class="loading-text">SCANNING ATMOSPHERIC CONDITIONS...</p>
                     </div>
 
                     <!-- Current Weather Display -->
@@ -64,44 +82,56 @@
                                 <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
                             </svg>
                             <span id="cityName"></span>
+                            <div class="location-pulse"></div>
                         </div>
                         
                         <div class="temperature-main">
-                            <span id="mainTemp"></span>
+                            <span id="mainTemp" class="temp-number"></span>
                             <span class="temp-unit">°C</span>
+                            <div class="temp-glow"></div>
                         </div>
                         
                         <div class="weather-info-row">
                             <div class="weather-icon-main">
+                                <div class="icon-backdrop"></div>
                                 <img id="mainWeatherIcon" src="" alt="Weather Icon">
                             </div>
                             <div class="weather-description" id="weatherDescription"></div>
                         </div>
 
                         <div class="date-time">
-                            <div id="currentDate"></div>
-                            <div id="currentTime"></div>
+                            <div id="currentDate" class="scan-line-text"></div>
+                            <div id="currentTime" class="digital-time"></div>
                         </div>
 
                         <!-- Quick Weather Stats -->
                         <div class="quick-stats">
                             <div class="stat-item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M13.5 0a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V7.5h-1.5a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V15h-1.5a.5.5 0 0 0 0 1h2a.5.5 0 0 0 .5-.5V.5a.5.5 0 0 0-.5-.5h-2zM7 1.5l.364-.343a.5.5 0 0 0-.728 0l-.002.002-.006.007-.022.023-.08.088a28.458 28.458 0 0 0-1.274 1.517c-.769.983-1.714 2.325-2.385 3.727C2.368 7.564 2 8.682 2 9.733 2 12.614 4.212 15 7 15s5-2.386 5-5.267c0-1.05-.368-2.169-.867-3.212-.671-1.402-1.616-2.744-2.385-3.727a28.458 28.458 0 0 0-1.354-1.605l-.022-.023-.006-.007-.002-.001L7 1.5zm0 0-.364-.343L7 1.5zm-.016.766L7 2.247l.016.019c.24.274.572.667.944 1.144.611.781 1.32 1.776 1.901 2.827H4.14c.58-1.051 1.29-2.046 1.9-2.827.373-.477.706-.87.945-1.144zM3 9.733c0-.755.244-1.612.638-2.496h6.724c.395.884.638 1.741.638 2.496C11 12.117 9.182 14 7 14s-4-1.883-4-4.267z"/>
-                                </svg>
-                                <span id="quickHumidity">--%</span>
+                                <div class="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M13.5 0a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V7.5h-1.5a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V15h-1.5a.5.5 0 0 0 0 1h2a.5.5 0 0 0 .5-.5V.5a.5.5 0 0 0-.5-.5h-2zM7 1.5l.364-.343a.5.5 0 0 0-.728 0l-.002.002-.006.007-.022.023-.08.088a28.458 28.458 0 0 0-1.274 1.517c-.769.983-1.714 2.325-2.385 3.727C2.368 7.564 2 8.682 2 9.733 2 12.614 4.212 15 7 15s5-2.386 5-5.267c0-1.05-.368-2.169-.867-3.212-.671-1.402-1.616-2.744-2.385-3.727a28.458 28.458 0 0 0-1.354-1.605l-.022-.023-.006-.007-.002-.001L7 1.5zm0 0-.364-.343L7 1.5zm-.016.766L7 2.247l.016.019c.24.274.572.667.944 1.144.611.781 1.32 1.776 1.901 2.827H4.14c.58-1.051 1.29-2.046 1.9-2.827.373-.477.706-.87.945-1.144zM3 9.733c0-.755.244-1.612.638-2.496h6.724c.395.884.638 1.741.638 2.496C11 12.117 9.182 14 7 14s-4-1.883-4-4.267z"/>
+                                    </svg>
+                                </div>
+                                <div class="stat-label">HUMIDITY</div>
+                                <div class="stat-value" id="quickHumidity">--%</div>
                             </div>
                             <div class="stat-item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M12.5 2A2.5 2.5 0 0 0 10 4.5a.5.5 0 0 1-1 0A3.5 3.5 0 1 1 12.5 8H.5a.5.5 0 0 1 0-1h12a2.5 2.5 0 0 0 0-5zm-7 1a1 1 0 0 0-1 1 .5.5 0 0 1-1 0 2 2 0 1 1 2 2h-5a.5.5 0 0 1 0-1h5a1 1 0 0 0 0-2zM0 9.5A.5.5 0 0 1 .5 9h10.042a3 3 0 1 1-3 3 .5.5 0 0 1 1 0 2 2 0 1 0 2-2H.5a.5.5 0 0 1-.5-.5z"/>
-                                </svg>
-                                <span id="quickWind">-- km/h</span>
+                                <div class="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M12.5 2A2.5 2.5 0 0 0 10 4.5a.5.5 0 0 1-1 0A3.5 3.5 0 1 1 12.5 8H.5a.5.5 0 0 1 0-1h12a2.5 2.5 0 0 0 0-5zm-7 1a1 1 0 0 0-1 1 .5.5 0 0 1-1 0 2 2 0 1 1 2 2h-5a.5.5 0 0 1 0-1h5a1 1 0 0 0 0-2zM0 9.5A.5.5 0 0 1 .5 9h10.042a3 3 0 1 1-3 3 .5.5 0 0 1 1 0 2 2 0 1 0 2-2H.5a.5.5 0 0 1-.5-.5z"/>
+                                    </svg>
+                                </div>
+                                <div class="stat-label">WIND</div>
+                                <div class="stat-value" id="quickWind">-- km/h</div>
                             </div>
                             <div class="stat-item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.5-4.923V11h1v.077c.51.085.944.383 1.187.88.246.5.285 1.02.153 1.507a2.521 2.521 0 0 1-2.851 1.82c-.426-.094-.787-.312-1.042-.62-.253-.308-.403-.694-.434-1.084h1.145c.027.338.144.608.336.76.196.155.46.235.768.235.33 0 .6-.108.804-.323.208-.219.324-.52.324-.87 0-.346-.118-.644-.327-.861a1.084 1.084 0 0 0-.777-.308c-.318 0-.58.12-.776.346a1.062 1.062 0 0 0-.308.759H7.5V5h4v1H8.5v4.077z"/>
-                                </svg>
-                                <span id="quickFeels">--°C</span>
+                                <div class="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.5-4.923V11h1v.077c.51.085.944.383 1.187.88.246.5.285 1.02.153 1.507a2.521 2.521 0 0 1-2.851 1.82c-.426-.094-.787-.312-1.042-.62-.253-.308-.403-.694-.434-1.084h1.145c.027.338.144.608.336.76.196.155.46.235.768.235.33 0 .6-.108.804-.323.208-.219.324-.52.324-.87 0-.346-.118-.644-.327-.861a1.084 1.084 0 0 0-.777-.308c-.318 0-.58.12-.776.346a1.062 1.062 0 0 0-.308.759H7.5V5h4v1H8.5v4.077z"/>
+                                    </svg>
+                                </div>
+                                <div class="stat-label">FEELS</div>
+                                <div class="stat-value" id="quickFeels">--°C</div>
                             </div>
                         </div>
                     </div>
@@ -113,13 +143,20 @@
                 <div class="forecast-content">
                     <!-- Header -->
                     <div class="panel-header">
-                        <h2 class="section-title">Today's Overview</h2>
-                        <div class="last-updated" id="lastUpdated">Updated just now</div>
+                        <div class="header-left">
+                            <h2 class="section-title">TACTICAL OVERVIEW</h2>
+                            <div class="title-underline"></div>
+                        </div>
+                        <div class="last-updated" id="lastUpdated">
+                            <span class="status-indicator"></span>
+                            UPDATED JUST NOW
+                        </div>
                     </div>
                     
                     <!-- Weather Details Grid -->
                     <div id="weatherDetails" class="weather-details d-none">
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M5 12.5a1.5 1.5 0 1 1-2-1.415V2.5a.5.5 0 0 1 1 0v8.585A1.5 1.5 0 0 1 5 12.5z"/>
@@ -127,44 +164,48 @@
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">Feels Like</div>
+                                <div class="detail-label">FEELS LIKE</div>
                                 <div class="detail-value" id="feelsLike">--°C</div>
                             </div>
                         </div>
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M13.5 0a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V7.5h-1.5a.5.5 0 0 0 0 1H15v2.75h-.5a.5.5 0 0 0 0 1h.5V15h-1.5a.5.5 0 0 0 0 1h2a.5.5 0 0 0 .5-.5V.5a.5.5 0 0 0-.5-.5h-2zM7 1.5l.364-.343a.5.5 0 0 0-.728 0l-.002.002-.006.007-.022.023-.08.088a28.458 28.458 0 0 0-1.274 1.517c-.769.983-1.714 2.325-2.385 3.727C2.368 7.564 2 8.682 2 9.733 2 12.614 4.212 15 7 15s5-2.386 5-5.267c0-1.05-.368-2.169-.867-3.212-.671-1.402-1.616-2.744-2.385-3.727a28.458 28.458 0 0 0-1.354-1.605l-.022-.023-.006-.007-.002-.001L7 1.5zm0 0-.364-.343L7 1.5zm-.016.766L7 2.247l.016.019c.24.274.572.667.944 1.144.611.781 1.32 1.776 1.901 2.827H4.14c.58-1.051 1.29-2.046 1.9-2.827.373-.477.706-.87.945-1.144zM3 9.733c0-.755.244-1.612.638-2.496h6.724c.395.884.638 1.741.638 2.496C11 12.117 9.182 14 7 14s-4-1.883-4-4.267z"/>
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">Humidity</div>
+                                <div class="detail-label">HUMIDITY</div>
                                 <div class="detail-value" id="humidity">--%</div>
                             </div>
                         </div>
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M12.5 2A2.5 2.5 0 0 0 10 4.5a.5.5 0 0 1-1 0A3.5 3.5 0 1 1 12.5 8H.5a.5.5 0 0 1 0-1h12a2.5 2.5 0 0 0 0-5zm-7 1a1 1 0 0 0-1 1 .5.5 0 0 1-1 0 2 2 0 1 1 2 2h-5a.5.5 0 0 1 0-1h5a1 1 0 0 0 0-2zM0 9.5A.5.5 0 0 1 .5 9h10.042a3 3 0 1 1-3 3 .5.5 0 0 1 1 0 2 2 0 1 0 2-2H.5a.5.5 0 0 1-.5-.5z"/>
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">Wind Speed</div>
+                                <div class="detail-label">WIND SPEED</div>
                                 <div class="detail-value" id="windSpeed">-- km/h</div>
                             </div>
                         </div>
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM2 8a6 6 0 1 1 8.424 5.47c-.215-.131-.427-.274-.627-.43l.47-.706c.177.131.353.254.525.368A5.973 5.973 0 0 0 13.943 8H13.5a.5.5 0 0 1 0-1h.443A5.972 5.972 0 0 0 8 2.057V2.5a.5.5 0 0 1-1 0v-.443A5.972 5.972 0 0 0 2.057 7H2.5a.5.5 0 0 1 0 1h-.443A5.972 5.972 0 0 0 7 13.943V13.5a.5.5 0 0 1 1 0v.443z"/>
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">Pressure</div>
+                                <div class="detail-label">PRESSURE</div>
                                 <div class="detail-value" id="pressure">-- mb</div>
                             </div>
                         </div>
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
@@ -172,25 +213,29 @@
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">Visibility</div>
+                                <div class="detail-label">VISIBILITY</div>
                                 <div class="detail-value" id="visibility">-- km</div>
                             </div>
                         </div>
-                        <div class="detail-card">
+                        <div class="detail-card" data-tilt>
+                            <div class="card-glow"></div>
                             <div class="detail-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
                                 </svg>
                             </div>
                             <div class="detail-content">
-                                <div class="detail-label">UV Index</div>
+                                <div class="detail-label">UV INDEX</div>
                                 <div class="detail-value" id="uvIndex">--</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 5-Day Forecast -->
-                    <h2 class="section-title mt-4">5-Day Forecast</h2>
+                    <div class="forecast-header">
+                        <h2 class="section-title">MISSION FORECAST</h2>
+                        <div class="title-underline"></div>
+                    </div>
                     <div id="forecast" class="forecast-container d-none"></div>
                 </div>
             </div>
