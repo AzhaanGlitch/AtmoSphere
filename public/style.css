@@ -923,7 +923,6 @@ body {
     padding: 40px 0;
     position: relative;
     min-height: 500px;
-    z-index: 20;
 }
 
 .globe-container {
