@@ -96,8 +96,14 @@ function initGlobe() {
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
         directionalLight.position.set(5, 3, 5);
         globeScene.add(directionalLight);
+
+        // IMPORTANT: mark initialized BEFORE starting the animation loop
+        globeInitialized = true;
+
+        // Start loading and animation
         loadGlobeModel();
         animateGlobe();
+
         window.addEventListener('resize', () => {
             if (!globeContainer) return;
             const width = globeContainer.clientWidth;
@@ -108,7 +114,7 @@ function initGlobe() {
                 globeRenderer.setSize(width, height);
             }
         });
-        globeInitialized = true;
+
         console.log('Globe initialization completed');
     } catch (error) {
         console.error('Error initializing globe:', error);
@@ -130,7 +136,7 @@ function loadGlobeModel() {
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         const maxSize = Math.max(size.x, size.y, size.z);
-        const desiredSize = 2.0; // Set desired diameter of the globe
+        const desiredSize = 3.8;
         const scale = desiredSize / maxSize;
         globeModel.scale.set(scale, scale, scale);
         globeModel.position.sub(center.multiplyScalar(scale));
@@ -142,6 +148,11 @@ function loadGlobeModel() {
         });
         globeScene.add(globeModel);
         console.log('Model re-scaled, centered, and added to scene');
+
+        // Render a single frame right after model adds (so user sees it immediately)
+        if (globeRenderer && globeScene && globeCamera) {
+            globeRenderer.render(globeScene, globeCamera);
+        }
     }, undefined, (error) => {
         console.error('✗ GLB model failed to load:', error);
     });
@@ -149,12 +160,21 @@ function loadGlobeModel() {
 
 // Animate globe
 function animateGlobe() {
+    // If initialization hasn't completed, don't start the loop.
     if (!globeInitialized) return;
-    requestAnimationFrame(animateGlobe);
-    if (globeModel) {
-        globeModel.rotation.y += 0.001;
+
+    function loop() {
+        requestAnimationFrame(loop);
+        if (globeModel) {
+            // rotation speed can be tuned
+            globeModel.rotation.y += 0.0015;
+        }
+        if (globeRenderer && globeScene && globeCamera) {
+            globeRenderer.render(globeScene, globeCamera);
+        }
     }
-    globeRenderer.render(globeScene, globeCamera);
+    // start the loop
+    loop();
 }
 
 // Create Animated Particles

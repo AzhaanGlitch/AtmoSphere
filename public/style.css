@@ -928,8 +928,8 @@ body {
 .globe-container {
     position: relative;
     width: 100%;
-    max-width: 400px;
-    height: 400px;
+    max-width: 700px;
+    height: 700px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -958,8 +958,8 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 380px;
-    height: 380px;
+    width: 300px;
+    height: 300px;
     pointer-events: none;
     z-index: 5;
 }
