@@ -3,6 +3,7 @@ const WEATHER_API_KEY = 'db712e605e96a5d39d853fb684e45d93';
 const UNSPLASH_API_KEY = 'vqQ4TjhQtDRnttG35Vy5b1AQZ3kOlynCkE0WPo_9DEo';
 const WEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 const UNSPLASH_BASE_URL = 'https://api.unsplash.com';
+const GLOBE_MODEL_URL = './3d_model/earth_globe_-_atlas.glb';
 
 // DOM Elements
 const cityInput = document.getElementById('cityInput');
@@ -13,6 +14,12 @@ const weatherDetails = document.getElementById('weatherDetails');
 const forecast = document.getElementById('forecast');
 const loadingState = document.getElementById('loadingState');
 const backgroundImage = document.getElementById('backgroundImage');
+const globeContainer = document.getElementById('globe-canvas');
+
+// Three.js variables for globe
+let globeScene, globeCamera, globeRenderer, globeModel;
+let globeInitialized = false;
+let proceduralGlobeCreated = false;
 
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
@@ -25,14 +32,16 @@ cityInput.addEventListener('keypress', (e) => {
 // Initialize 3D Background
 init3DBackground();
 
-// Initialize Globe
-initGlobe();
-
 // Create Animated Particles
 createParticles();
 
-// Initialize with Delhi, India
+// Initialize with Delhi, India and globe
 window.addEventListener('load', () => {
+    // Initialize globe after DOM is ready
+    setTimeout(() => {
+        initGlobe();
+    }, 100);
+    
     getWeatherData('Delhi');
 });
 
@@ -94,6 +103,235 @@ function init3DBackground() {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
+}
+
+// Initialize 3D Globe
+function initGlobe() {
+    // Check if container exists and has dimensions
+    if (!globeContainer || globeContainer.clientWidth === 0 || globeContainer.clientHeight === 0) {
+        console.warn('Globe container not ready, retrying...');
+        setTimeout(initGlobe, 100);
+        return;
+    }
+
+    if (globeInitialized) {
+        return;
+    }
+
+    try {
+        // Setup scene
+        globeScene = new THREE.Scene();
+        globeCamera = new THREE.PerspectiveCamera(
+            75,
+            globeContainer.clientWidth / globeContainer.clientHeight,
+            0.1,
+            1000
+        );
+        globeRenderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            alpha: true,
+            precision: 'highp',
+            powerPreference: 'high-performance'
+        });
+        
+        globeRenderer.setSize(globeContainer.clientWidth, globeContainer.clientHeight);
+        globeRenderer.setPixelRatio(window.devicePixelRatio);
+        globeRenderer.setClearColor(0x000000, 0);
+        
+        // Clear previous content if any
+        globeContainer.innerHTML = '';
+        globeContainer.appendChild(globeRenderer.domElement);
+        
+        globeCamera.position.z = 2.5;
+        
+        // Lighting setup
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        globeScene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        directionalLight.position.set(5, 3, 5);
+        globeScene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0x00f0ff, 0.4);
+        pointLight.position.set(-5, -3, 5);
+        globeScene.add(pointLight);
+        
+        // Try to load GLB model FIRST
+        loadGlobeModel();
+        
+        // Start animation loop
+        animateGlobe();
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            if (!globeContainer) return;
+            const width = globeContainer.clientWidth;
+            const height = globeContainer.clientHeight;
+            
+            if (width > 0 && height > 0) {
+                globeCamera.aspect = width / height;
+                globeCamera.updateProjectionMatrix();
+                globeRenderer.setSize(width, height);
+            }
+        });
+        
+        globeInitialized = true;
+        console.log('Globe initialization started');
+        
+    } catch (error) {
+        console.error('Error initializing globe:', error);
+    }
+}
+
+// Load GLB model
+function loadGlobeModel() {
+    const loader = new THREE.GLTFLoader();
+    
+    console.log('Attempting to load GLB model from:', GLOBE_MODEL_URL);
+    
+    loader.load(
+        GLOBE_MODEL_URL,
+        (gltf) => {
+            console.log('✓ GLB model loaded successfully!');
+            
+            globeModel = gltf.scene;
+            
+            // Scale and position the model
+            globeModel.scale.set(1, 1, 1);
+            globeModel.position.set(0, 0, 0);
+            
+            // Process materials for better appearance
+            globeModel.traverse((node) => {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    node.receiveShadow = true;
+                    
+                    // Enhance material properties
+                    if (node.material) {
+                        node.material.side = THREE.FrontSide;
+                        node.material.metalness = 0.2;
+                        node.material.roughness = 0.8;
+                        
+                        // Try to enhance the texture
+                        if (node.material.map) {
+                            node.material.map.encoding = THREE.sRGBEncoding;
+                        }
+                    }
+                }
+            });
+            
+            globeScene.add(globeModel);
+            proceduralGlobeCreated = false;
+            console.log('Model added to scene');
+        },
+        (progress) => {
+            const percent = Math.round((progress.loaded / progress.total) * 100);
+            console.log(`Loading globe: ${percent}%`);
+        },
+        (error) => {
+            console.warn('✗ GLB model failed to load:', error.message);
+            console.warn('Error details:', error);
+            
+            // Only create procedural globe if we haven't already
+            if (!proceduralGlobeCreated) {
+                console.log('Creating procedural globe as fallback...');
+                createProceduralGlobe();
+            }
+        }
+    );
+}
+
+// Create a procedural globe (fallback)
+function createProceduralGlobe() {
+    if (proceduralGlobeCreated) {
+        console.log('Procedural globe already created');
+        return;
+    }
+
+    try {
+        const geometry = new THREE.IcosahedronGeometry(1, 6);
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 4096;
+        canvas.height = 2048;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Create Earth texture
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Improved Perlin-like noise for better continents
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                const idx = (y * canvas.width + x) * 4;
+                
+                // Multiple frequency noise for better detail
+                const noise1 = Math.sin(x * 0.003) * Math.cos(y * 0.002);
+                const noise2 = Math.sin(x * 0.01) * Math.cos(y * 0.008) * 0.5;
+                const noise3 = Math.sin(x * 0.02) * Math.cos(y * 0.015) * 0.25;
+                const noise = noise1 + noise2 + noise3;
+                
+                if (noise > 0.3) {
+                    // Land - green
+                    data[idx] = 34;
+                    data[idx + 1] = 120;
+                    data[idx + 2] = 60;
+                } else if (noise > 0.1) {
+                    // Coast - sandy
+                    data[idx] = 180;
+                    data[idx + 1] = 150;
+                    data[idx + 2] = 100;
+                } else if (noise > -0.1) {
+                    // Shallow water - light blue
+                    data[idx] = 70;
+                    data[idx + 1] = 130;
+                    data[idx + 2] = 180;
+                } else {
+                    // Ocean - dark blue
+                    data[idx] = 25;
+                    data[idx + 1] = 60;
+                    data[idx + 2] = 120;
+                }
+                
+                data[idx + 3] = 255; // Alpha
+            }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        texture.encoding = THREE.sRGBEncoding;
+        
+        const material = new THREE.MeshStandardMaterial({ 
+            map: texture,
+            roughness: 0.7,
+            metalness: 0.1,
+            side: THREE.FrontSide
+        });
+        
+        globeModel = new THREE.Mesh(geometry, material);
+        globeScene.add(globeModel);
+        
+        proceduralGlobeCreated = true;
+        console.log('✓ Procedural globe created successfully');
+    } catch (error) {
+        console.error('Error creating procedural globe:', error);
+    }
+}
+
+// Animate globe
+function animateGlobe() {
+    if (!globeInitialized) return;
+    
+    requestAnimationFrame(animateGlobe);
+    
+    if (globeModel) {
+        globeModel.rotation.y += 0.0002;
+    }
+    
+    globeRenderer.render(globeScene, globeCamera);
 }
 
 // Create Animated Particles
@@ -444,14 +682,6 @@ document.addEventListener('keydown', (e) => {
         cityInput.select();
     }
 });
-
-// Add scan line animation to text
-function addScanLineEffect() {
-    const scanElements = document.querySelectorAll('.scan-line-text');
-    scanElements.forEach(el => {
-        el.style.animation = 'scanLine 2s infinite';
-    });
-}
 
 // Add entrance animations when elements become visible
 const observerOptions = {
