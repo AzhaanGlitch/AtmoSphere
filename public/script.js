@@ -136,7 +136,7 @@ function loadGlobeModel() {
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         const maxSize = Math.max(size.x, size.y, size.z);
-        const desiredSize = 3.8;
+        const desiredSize = 3.0;
         const scale = desiredSize / maxSize;
         globeModel.scale.set(scale, scale, scale);
         globeModel.position.sub(center.multiplyScalar(scale));
