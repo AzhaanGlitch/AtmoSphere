@@ -1117,13 +1117,13 @@ body {
     }
 
     .globe-container {
-        max-width: 300px;
-        height: 300px;
+        max-width: 380px; /* MODIFIED: Increased from 300px to give globe and rings more space */
+        height: 380px;    /* MODIFIED: Increased from 300px */
     }
 
     .globe-overlay {
-        width: 280px;
-        height: 280px;
+        width: 360px;  /* MODIFIED: Increased proportionally from 280px */
+        height: 360px; /* MODIFIED: Increased proportionally from 280px */
     }
 
     .globe-info {
@@ -1171,6 +1171,17 @@ body {
 
     .forecast-container {
         grid-template-columns: 1fr;
+    }
+
+    /* ADDED: Specific, slightly smaller sizing for the smallest mobile screens */
+    .globe-container {
+        max-width: 320px;
+        height: 320px;
+    }
+
+    .globe-overlay {
+        width: 300px;
+        height: 300px;
     }
 }
 
