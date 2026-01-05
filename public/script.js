@@ -97,7 +97,6 @@ function initGlobe() {
         directionalLight.position.set(5, 3, 5);
         globeScene.add(directionalLight);
 
-        // IMPORTANT: mark initialized BEFORE starting the animation loop
         globeInitialized = true;
 
         // Start loading and animation
@@ -149,7 +148,7 @@ function loadGlobeModel() {
         globeScene.add(globeModel);
         console.log('Model re-scaled, centered, and added to scene');
 
-        // Render a single frame right after model adds (so user sees it immediately)
+        // Render a single frame right after model adds
         if (globeRenderer && globeScene && globeCamera) {
             globeRenderer.render(globeScene, globeCamera);
         }
@@ -160,13 +159,11 @@ function loadGlobeModel() {
 
 // Animate globe
 function animateGlobe() {
-    // If initialization hasn't completed, don't start the loop.
     if (!globeInitialized) return;
 
     function loop() {
         requestAnimationFrame(loop);
         if (globeModel) {
-            // rotation speed can be tuned
             globeModel.rotation.y += 0.0015;
         }
         if (globeRenderer && globeScene && globeCamera) {
