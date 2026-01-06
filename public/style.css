@@ -1173,7 +1173,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    /* ADDED: Specific, slightly smaller sizing for the smallest mobile screens */
     .globe-container {
         max-width: 320px;
         height: 320px;
