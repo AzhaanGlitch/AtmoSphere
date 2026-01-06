@@ -917,7 +917,7 @@ body {
     color: var(--text-secondary);
 }
 
-/* Globe Section - FIXED VERSION */
+/* Globe Section */
 .globe-section {
     margin-top: 50px;
     padding: 40px 0;
@@ -1117,13 +1117,13 @@ body {
     }
 
     .globe-container {
-        max-width: 380px; /* MODIFIED: Increased from 300px to give globe and rings more space */
-        height: 380px;    /* MODIFIED: Increased from 300px */
+        max-width: 380px;
+        height: 380px;  
     }
 
     .globe-overlay {
-        width: 360px;  /* MODIFIED: Increased proportionally from 280px */
-        height: 360px; /* MODIFIED: Increased proportionally from 280px */
+        width: 360px;
+        height: 360px;
     }
 
     .globe-info {
